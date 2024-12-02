@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-version=1.0.2
+version=1.0.3
 image_name="mariozechner/fasttext-lid-server"
 
 # Check git status
