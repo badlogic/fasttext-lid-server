@@ -3,6 +3,11 @@ set -e
 
 version=1.0.0
 
+if [ -n "$(git status --porcelain)" ]; then
+    echo "Uncommitted changes exist"
+    exit 1
+fi
+
 if git rev-parse "v${version}" >/dev/null 2>&1; then
     echo "Tag v${version} already exists"
     exit 1
