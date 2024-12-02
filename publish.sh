@@ -1,9 +1,10 @@
 #!/bin/sh
 set -e
 
-version=1.0.2
-platforms="linux/amd64,linux/arm64"
+version=1.0.1
+image_name="mariozechner/fasttext-lid-server"
 
+# Check git status
 if [ -n "$(git status --porcelain)" ]; then
     echo "Uncommitted changes exist"
     exit 1
@@ -14,14 +15,26 @@ if git rev-parse "v${version}" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Set up buildx builder
-docker buildx create --use --name multi-arch-builder --platform ${platforms}
+# Build AMD64
+docker build --platform linux/amd64 -t ${image_name}:${version}-amd64 .
+docker push ${image_name}:${version}-amd64
 
-# Build and push multi-arch images
-docker buildx build --platform ${platforms} \
-    --tag mariozechner/fasttext-lid-server:latest \
-    --tag mariozechner/fasttext-lid-server:${version} \
-    --push .
+# Build ARM64
+docker build --platform linux/arm64 -t ${image_name}:${version}-arm64 .
+docker push ${image_name}:${version}-arm64
 
+# Create and push manifest
+docker manifest create ${image_name}:${version} \
+    ${image_name}:${version}-amd64 \
+    ${image_name}:${version}-arm64
+
+docker manifest create ${image_name}:latest \
+    ${image_name}:${version}-amd64 \
+    ${image_name}:${version}-arm64
+
+docker manifest push ${image_name}:${version}
+docker manifest push ${image_name}:latest
+
+# Tag git release
 git tag "v${version}"
 git push origin "v${version}"
